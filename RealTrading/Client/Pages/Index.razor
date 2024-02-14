@@ -1,0 +1,35 @@
+﻿@page "/"
+
+@using Microsoft.AspNetCore.SignalR.Client
+@using RealTrading.Shared
+@implements IAsyncDisposable
+<h3>@tL.Price</h3>
+
+@code {
+    public TL tL = new TL() { Price = "0" };
+    private HubConnection? _hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hubConnection = new HubConnectionBuilder().WithUrl("https://localhost:7181/pricehub").Build();
+
+        _hubConnection.On<TL>("ReceiverPrice", message =>
+        {
+            Console.WriteLine(message);
+            tL = message;
+            InvokeAsync(StateHasChanged);
+        });
+
+        await _hubConnection.StartAsync();
+
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.DisposeAsync();
+        }
+    }
+
+}
